@@ -5,7 +5,6 @@ from pathlib import Path
 from processors.pdfProcessor import PDFProcessor
 from processors.docxProcessor import DocxProcessor
 from processors.excelProcessor import ExcelProcessor
-from pathlib import Path
 
 class DocumentService:
 
@@ -23,12 +22,12 @@ class DocumentService:
 
         os.makedirs(self.UPLOAD_FOLDER, exist_ok=True)
 
-        file_path = os.path.join(
+        filePath = os.path.join(
             self.UPLOAD_FOLDER,
             file.filename
         )
 
-        with open(file_path, "wb") as buffer:
+        with open(filePath, "wb") as buffer:
             buffer.write(await file.read())
 
         extension = Path(file.filename).suffix.lower()
@@ -51,19 +50,25 @@ class DocumentService:
 
         db = SessionLocal()
 
-        document = Document(
-            fileName=file.filename,
-            fileType=Path(file.filename).suffix.lower(),
-            filePath=file_path,
-            extractedText=text,
-            summary=""
-        )
+        try:
 
-        db.add(document)
+            document = Document(
+                fileName=file.filename,
+                fileType=extension,
+                filePath=filePath,
+                extractedText=text,
+                summary=""
+            )
 
-        db.commit()
+            db.add(document)
 
-        db.close()
+            db.commit()
+        except Exception as ex:
+            db.rollback()
+            raise ex
+
+        finally:
+            db.close()
 
 
         return {

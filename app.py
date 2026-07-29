@@ -14,12 +14,11 @@ def home():
 
 
 service = DocumentService()
+
 @app.post("/process-document")
 async def process_document(file: UploadFile = File(...)):
 
-    extracted_text = await service.process_document(file)
-
-    result = await documentService.process_document(file)
+    result = await service.process_document(file)
 
     return {
         "status": "SUCCESS",

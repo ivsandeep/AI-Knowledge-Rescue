@@ -3,7 +3,7 @@ import fitz
 
 class PDFProcessor:
 
-    def extract_text(self, file_path):
+    def extractText(self, file_path):
 
         document = fitz.open(file_path)
 
