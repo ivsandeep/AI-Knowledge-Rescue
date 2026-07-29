@@ -7,6 +7,24 @@ app = FastAPI()
 
 initDb()
 
+from fastapi import FastAPI
+import os
+
+@app.get("/debug/uploads")
+def debugUploads():
+    uploadDir = "uploads"
+
+    if not os.path.exists(uploadDir):
+        return {
+            "exists": False,
+            "currentDirectory": os.getcwd()
+        }
+
+    return {
+        "exists": True,
+        "currentDirectory": os.getcwd(),
+        "files": os.listdir(uploadDir)
+    }
 
 @app.get("/")
 def home():
