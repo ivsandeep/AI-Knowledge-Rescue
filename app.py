@@ -1,7 +1,11 @@
 from fastapi import FastAPI, UploadFile, File
 from services.documentService import DocumentService
 import os
+from database.initDb import initDb
+
 app = FastAPI()
+
+initDb()
 
 
 @app.get("/")
