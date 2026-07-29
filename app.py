@@ -49,3 +49,31 @@ async def process_document(file: UploadFile = File(...)):
         "fileType": result["fileType"],
         "textLength": result["textLength"]
     }
+
+
+
+
+from fastapi import Request
+
+@app.post("/process-document-pa")
+async def process_document_pa(request: Request):
+
+    fileName = request.headers.get("File-Name")
+
+    if not fileName:
+        return {"error": "File-Name header is missing"}
+
+    fileBytes = await request.body()
+
+    result = await service.process_document_from_path(
+        fileName,
+        fileBytes
+    )
+
+    return {
+        "status": "SUCCESS",
+        "message": "Document processed successfully",
+        "fileName": result["fileName"],
+        "fileType": result["fileType"],
+        "textLength": result["textLength"]
+    }

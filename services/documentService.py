@@ -1,10 +1,13 @@
 import os
+from pathlib import Path
+
 from database.database import SessionLocal
 from database.models import Document
-from pathlib import Path
+
 from processors.pdfProcessor import PDFProcessor
 from processors.docxProcessor import DocxProcessor
 from processors.excelProcessor import ExcelProcessor
+
 
 class DocumentService:
 
@@ -13,24 +16,12 @@ class DocumentService:
     def __init__(self):
 
         self.pdfProcessor = PDFProcessor()
-
         self.docxProcessor = DocxProcessor()
-
         self.excelProcessor = ExcelProcessor()
 
-    async def process_document(self, file):
+    def _processFile(self, fileName, filePath):
 
-        os.makedirs(self.UPLOAD_FOLDER, exist_ok=True)
-
-        filePath = os.path.join(
-            self.UPLOAD_FOLDER,
-            file.filename
-        )
-
-        with open(filePath, "wb") as buffer:
-            buffer.write(await file.read())
-
-        extension = Path(file.filename).suffix.lower()
+        extension = Path(fileName).suffix.lower()
 
         if extension == ".pdf":
 
@@ -46,14 +37,14 @@ class DocumentService:
 
         else:
 
-            raise Exception(f"Unsupported File Type : {extension}")
+            raise Exception(f"Unsupported File Type: {extension}")
 
         db = SessionLocal()
 
         try:
 
             document = Document(
-                fileName=file.filename,
+                fileName=fileName,
                 fileType=extension,
                 filePath=filePath,
                 extractedText=text,
@@ -61,20 +52,49 @@ class DocumentService:
             )
 
             db.add(document)
-
             db.commit()
-        except Exception as ex:
+
+        except Exception:
+
             db.rollback()
-            raise ex
+            raise
 
         finally:
+
             db.close()
 
-
         return {
-        "fileName": file.filename,
-        "fileType": extension,
-        "textLength": len(text)
-}
+            "fileName": fileName,
+            "fileType": extension,
+            "textLength": len(text)
+        }
 
+    async def process_document(self, file):
 
+        os.makedirs(self.UPLOAD_FOLDER, exist_ok=True)
+
+        filePath = os.path.join(
+            self.UPLOAD_FOLDER,
+            file.filename
+        )
+
+        with open(filePath, "wb") as buffer:
+
+            buffer.write(await file.read())
+
+        return self._processFile(file.filename, filePath)
+
+    async def process_document_from_path(self, fileName, fileBytes):
+
+        os.makedirs(self.UPLOAD_FOLDER, exist_ok=True)
+
+        filePath = os.path.join(
+            self.UPLOAD_FOLDER,
+            fileName
+        )
+
+        with open(filePath, "wb") as buffer:
+
+            buffer.write(fileBytes)
+
+        return self._processFile(fileName, filePath)
